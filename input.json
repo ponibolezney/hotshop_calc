@@ -1,0 +1,17 @@
+{
+  "rooms": [
+    {
+      "name": "Горячий цех",
+      "area_m2": 40,
+      "height_m": 3,
+      "equipment": [
+        {
+          "name": "Плита",
+          "power_kw": 10,
+          "count": 2,
+          "load_factor": 0.7
+        }
+      ]
+    }
+  ]
+}
