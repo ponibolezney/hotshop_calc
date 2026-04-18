@@ -1,0 +1,42 @@
+{
+  "constants": {
+    "k1": 0.5,
+    "k2": 0.7,
+    "k_empirical": 180.0,
+    "z_m": 1.1,
+    "ko": 0.8,
+    "a": 1.25
+  },
+  "rooms": [
+    {
+      "room_name": "Цех булочек (вкусных)",
+      "room_category": "Горячий цех",
+      "equipment": [
+        {
+          "name": "Плита ебли твоей мамаши",
+          "equipment_type_id": "induction_hob",
+          "quantity": 1,
+          "qy_kw": 21.0,
+          "ka_w_per_kw": 200.0,
+          "kz": 0.7,
+          "position": "У стены",
+          "width_mm": 200.0,
+          "depth_mm": 200.0,
+          "room_name": "Цех булочек (вкусных)"
+        },
+        {
+          "name": "фыв",
+          "equipment_type_id": "induction_hob",
+          "quantity": 3,
+          "qy_kw": 21.0,
+          "ka_w_per_kw": 200.0,
+          "kz": 0.7,
+          "position": "В углу",
+          "width_mm": 500.0,
+          "depth_mm": 200.0,
+          "room_name": "Цех булочек (вкусных)"
+        }
+      ]
+    }
+  ]
+}
