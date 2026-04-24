@@ -4,3 +4,7 @@ dist/
 __pycache__/
 *.pyc
 *.spec
+.env
+data/debug_*.json
+data/debug_*.txt
+data/pdf_pages/

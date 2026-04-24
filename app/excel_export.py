@@ -89,6 +89,7 @@ def export_project_to_excel(
         "bold": True,
         "align": "center",
         "valign": "vcenter",
+        "bg_color": "#D9EAF7",
     })
 
     fmt_number = workbook.add_format({
@@ -111,6 +112,7 @@ def export_project_to_excel(
         "align": "center",
         "valign": "vcenter",
         "num_format": "0.00",
+        "bg_color": "#FFF2CC",
     })
 
     # ---------- Лист: Исходные данные ----------
@@ -167,6 +169,7 @@ def export_project_to_excel(
 
     for room in project.rooms:
         room_start = current_row
+
         for eq in room.equipment:
             ws_input.write(current_row, 0, room.room_name, fmt_text)
             ws_input.write(current_row, 1, room.room_category, fmt_text)
@@ -181,7 +184,7 @@ def export_project_to_excel(
             ws_input.write(current_row, 10, eq.depth_mm, fmt_number3)
             current_row += 1
 
-        # визуальная группировка помещений
+        # визуальная пустая строка между помещениями
         if current_row > room_start:
             for col in range(len(input_headers)):
                 ws_input.write_blank(current_row, col, None, fmt_cell)
@@ -220,7 +223,7 @@ def export_project_to_excel(
         ws_ref.write(ref_row, col, header, fmt_header)
     ref_row += 1
 
-    room_categories_start_excel_row = ref_row + 1  # 1-based for Excel formulas
+    room_categories_start_excel_row = ref_row + 1  # Excel row number, 1-based
 
     room_categories_count = 0
     for row_data in catalog.room_categories:
@@ -246,7 +249,7 @@ def export_project_to_excel(
         ws_ref.write(ref_row, col, header, fmt_header)
     ref_row += 1
 
-    position_start_excel_row = ref_row + 1  # 1-based for Excel formulas
+    position_start_excel_row = ref_row + 1  # Excel row number, 1-based
 
     position_count = 0
     for row_data in catalog.position_coefficients:
@@ -263,11 +266,11 @@ def export_project_to_excel(
 
     # ---------- Лист: Расчёт ----------
     ws_calc.set_column("A:A", 22)
-    ws_calc.set_column("B:B", 20)
+    ws_calc.set_column("B:B", 22)
     ws_calc.set_column("C:C", 28)
     ws_calc.set_column("D:D", 20)
-    ws_calc.set_column("E:I", 14)
-    ws_calc.set_column("J:P", 16)
+    ws_calc.set_column("E:H", 14)
+    ws_calc.set_column("I:R", 16)
 
     calc_headers = [
         "Помещение",              # A
@@ -293,94 +296,149 @@ def export_project_to_excel(
     for col, header in enumerate(calc_headers):
         ws_calc.write(0, col, header, fmt_header)
 
-    equipment_rows = _build_equipment_rows(project)
-
     # Константы с листа "Исходные данные"
     # B2..B7 в Excel-координатах:
     const_k1 = "'Исходные данные'!$B$2"
-    const_k2 = "'Исходные данные'!$B$3"
     const_k = "'Исходные данные'!$B$4"
     const_z = "'Исходные данные'!$B$5"
     const_ko = "'Исходные данные'!$B$6"
     const_a = "'Исходные данные'!$B$7"
 
-    for idx, row_data in enumerate(equipment_rows, start=2):
-        excel_row = idx
+    current_excel_row = 2
+    project_total_cells = []
 
-        width_m = float(row_data["width_mm"]) / 1000.0
-        depth_m = float(row_data["depth_mm"]) / 1000.0
+    for room in project.rooms:
+        if not room.equipment:
+            continue
 
-        ws_calc.write(f"A{excel_row}", row_data["room_name"], fmt_text)
-        ws_calc.write(f"B{excel_row}", row_data["room_category"], fmt_text)
-        ws_calc.write(f"C{excel_row}", row_data["equipment_name"], fmt_text)
-        ws_calc.write(f"D{excel_row}", row_data["position"], fmt_text)
-        ws_calc.write_number(f"E{excel_row}", row_data["quantity"], fmt_cell)
-        ws_calc.write_number(f"F{excel_row}", row_data["qy_kw"], fmt_number3)
-        ws_calc.write_number(f"G{excel_row}", row_data["ka_w_per_kw"], fmt_number3)
-        ws_calc.write_number(f"H{excel_row}", row_data["kz"], fmt_number3)
-        ws_calc.write_number(f"I{excel_row}", width_m, fmt_number3)
-        ws_calc.write_number(f"J{excel_row}", depth_m, fmt_number3)
+        room_name = room.room_name
 
-        # K = D = 2*A*B/(A+B)
-        ws_calc.write_formula(
-            f"K{excel_row}",
-            f"=2*I{excel_row}*J{excel_row}/(I{excel_row}+J{excel_row})",
-            fmt_number3
+        # Заголовок помещения
+        ws_calc.merge_range(
+            current_excel_row - 1,
+            0,
+            current_excel_row - 1,
+            17,
+            f"Помещение: {room_name}",
+            fmt_room
         )
 
-        # L = r по положению
-        ws_calc.write_formula(
-            f"L{excel_row}",
-            (
-                f'=XLOOKUP(D{excel_row},'
-                f"'Справочники'!$A${position_start_excel_row}:$A${position_end_excel_row},"
-                f"'Справочники'!$B${position_start_excel_row}:$B${position_end_excel_row},"
-                f'"")'
-            ),
-            fmt_number3
+        current_excel_row += 1
+        room_first_equipment_row = current_excel_row
+
+        for eq in room.equipment:
+            excel_row = current_excel_row
+
+            width_m = float(eq.width_mm) / 1000.0
+            depth_m = float(eq.depth_mm) / 1000.0
+
+            ws_calc.write(f"A{excel_row}", room.room_name, fmt_text)
+            ws_calc.write(f"B{excel_row}", room.room_category, fmt_text)
+            ws_calc.write(f"C{excel_row}", eq.name, fmt_text)
+            ws_calc.write(f"D{excel_row}", eq.position, fmt_text)
+            ws_calc.write_number(f"E{excel_row}", eq.quantity, fmt_cell)
+            ws_calc.write_number(f"F{excel_row}", eq.qy_kw, fmt_number3)
+            ws_calc.write_number(f"G{excel_row}", eq.ka_w_per_kw, fmt_number3)
+            ws_calc.write_number(f"H{excel_row}", eq.kz, fmt_number3)
+            ws_calc.write_number(f"I{excel_row}", width_m, fmt_number3)
+            ws_calc.write_number(f"J{excel_row}", depth_m, fmt_number3)
+
+            # K = D = 2*A*B/(A+B)
+            ws_calc.write_formula(
+                f"K{excel_row}",
+                f"=2*I{excel_row}*J{excel_row}/(I{excel_row}+J{excel_row})",
+                fmt_number3
+            )
+
+            # L = r по положению
+            ws_calc.write_formula(
+                f"L{excel_row}",
+                (
+                    f"=IFERROR(INDEX('Справочники'!$B${position_start_excel_row}:$B${position_end_excel_row},"
+                    f"MATCH(D{excel_row},'Справочники'!$A${position_start_excel_row}:$A${position_end_excel_row},0)),\"\")"
+                ),
+                fmt_number3
+            )
+
+            # M = Qк = quantity * Qy * Ka * K1 * Kз / 1000
+            ws_calc.write_formula(
+                f"M{excel_row}",
+                f"=E{excel_row}*F{excel_row}*G{excel_row}*{const_k1}*H{excel_row}/1000",
+                fmt_number3
+            )
+
+            # N = Lк = k * Qк^(1/3) * (z + 1.7*D)^(5/3) * r
+            ws_calc.write_formula(
+                f"N{excel_row}",
+                f"={const_k}*(M{excel_row}^(1/3))*(({const_z}+1.7*K{excel_row})^(5/3))*L{excel_row}",
+                fmt_number
+            )
+
+            # O = a
+            ws_calc.write_formula(f"O{excel_row}", f"={const_a}", fmt_number3)
+
+            # P = Ko
+            ws_calc.write_formula(f"P{excel_row}", f"={const_ko}", fmt_number3)
+
+            # Q = Li = Lк * a / Ko
+            ws_calc.write_formula(
+                f"Q{excel_row}",
+                f"=N{excel_row}*O{excel_row}/P{excel_row}",
+                fmt_number
+            )
+
+            # R = проверка Kз по категории помещения из справочника
+            ws_calc.write_formula(
+                f"R{excel_row}",
+                (
+                    f"=IFERROR(INDEX('Справочники'!$B${room_categories_start_excel_row}:$B${room_categories_end_excel_row},"
+                    f"MATCH(B{excel_row},'Справочники'!$A${room_categories_start_excel_row}:$A${room_categories_end_excel_row},0)),\"\")"
+                ),
+                fmt_number3
+            )
+
+            current_excel_row += 1
+
+        room_last_equipment_row = current_excel_row - 1
+
+        # Итог по помещению
+        ws_calc.merge_range(
+            current_excel_row - 1,
+            0,
+            current_excel_row - 1,
+            15,
+            f"Итого по помещению: {room_name}",
+            fmt_total
         )
 
-        # M = Qк = quantity * Qy * Ka * K1 * Kз / 1000
         ws_calc.write_formula(
-            f"M{excel_row}",
-            f"=E{excel_row}*F{excel_row}*G{excel_row}*{const_k1}*H{excel_row}/1000",
-            fmt_number3
+            current_excel_row - 1,
+            16,
+            f"=SUM(Q{room_first_equipment_row}:Q{room_last_equipment_row})",
+            fmt_total
         )
 
-        # N = Lк = k * Qк^(1/3) * (z + 1.7*D)^(5/3) * r
-        ws_calc.write_formula(
-            f"N{excel_row}",
-            f"={const_k}*(M{excel_row}^(1/3))*(({const_z}+1.7*K{excel_row})^(5/3))*L{excel_row}",
-            fmt_number
+        project_total_cells.append(f"Q{current_excel_row}")
+
+        # Пустая строка после помещения
+        current_excel_row += 2
+
+    # Общий итог по всем помещениям
+    if project_total_cells:
+        ws_calc.merge_range(
+            current_excel_row - 1,
+            0,
+            current_excel_row - 1,
+            15,
+            "Итого по всем помещениям",
+            fmt_total
         )
 
-        # O = a
-        ws_calc.write_formula(f"O{excel_row}", f"={const_a}", fmt_number3)
-
-        # P = Ko
-        ws_calc.write_formula(f"P{excel_row}", f"={const_ko}", fmt_number3)
-
-        # Q = Li = Lк * a / Ko
         ws_calc.write_formula(
-            f"Q{excel_row}",
-            f"=N{excel_row}*O{excel_row}/P{excel_row}",
-            fmt_number
+            current_excel_row - 1,
+            16,
+            "=" + "+".join(project_total_cells),
+            fmt_total
         )
 
-        # R = проверка Kз по категории помещения из справочника
-        ws_calc.write_formula(
-            f"R{excel_row}",
-            (
-                f'=XLOOKUP(B{excel_row},'
-                f"'Справочники'!$A${room_categories_start_excel_row}:$A${room_categories_end_excel_row},"
-                f"'Справочники'!$B${room_categories_start_excel_row}:$B${room_categories_end_excel_row},"
-                f'"")'
-            ),
-            fmt_number3
-        )
-
-    total_row = len(equipment_rows) + 2
-    ws_calc.write(total_row - 1, 15, "Итого по Li, м³/ч", fmt_total)
-    ws_calc.write_formula(total_row - 1, 16, f"=SUM(Q2:Q{len(equipment_rows)+1})", fmt_total)
-    
     workbook.close()

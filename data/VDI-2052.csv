@@ -1,0 +1,23 @@
+type_id,type_name,energy_source,default_qy_kw,ka_w_per_kw,notes
+cooking_kettle,Котел варочный,electric,35,200,VDI2052
+pressure_cooker,Скороварка,electric,40,10,VDI2052
+tilting_pan,Сковорода опрокидывающаяся,electric,450,400,VDI2052
+griddle,Жарочная поверхность,electric,330,400,VDI2052
+grill_salamander,Гриль/саламандра,electric,800,175,VDI2052
+oven,Духовой шкаф,electric,350,200,VDI2052
+deep_fryer,Фритюрница,electric,90,700,VDI2052
+automatic_fryer,Автоматическая фритюрница,electric,50,100,VDI2052
+induction_cooker,Индукционная плита,electric,70,280,VDI2052
+ceramic_cooker,Керамическая плита,electric,200,80,VDI2052
+wok,Вок,electric,70,28,VDI2052
+large_hob,Большая варочная поверхность,electric,260,105,VDI2052
+microwave,Микроволновая печь,electric,50,10,VDI2052
+bain_marie,Мармит,electric,125,200,VDI2052
+chafing_dish,Подогреватель пищи,electric,350,0,VDI2052
+refrigerator,Холодильник,electric,700,0,VDI2052
+food_processor,Кухонный процессор,electric,175,0,VDI2052
+conveyor,Конвейер,electric,1000,0,VDI2052
+hot_server,Раздаточный шкаф,electric,125,200,VDI2052
+cold_server,Холодильный шкаф,electric,700,0,VDI2052
+dishwasher,Посудомоечная машина,electric,300,0,VDI2052
+coffee_station,Станция горячих напитков,electric,100,200,VDI2052

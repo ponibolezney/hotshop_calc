@@ -16,13 +16,13 @@ class EquipmentItem(BaseModel):
     equipment_type_id: str
     quantity: int = Field(ge=1)
 
-    qy_kw: float = Field(gt=0, description="Установленная мощность оборудования, кВт")
-    ka_w_per_kw: float = Field(gt=0, description="Удельные конвективные тепловыделения, Вт/кВт")
-    kz: float = Field(gt=0, description="Коэффициент загрузки оборудования")
+    qy_kw: float = Field(ge=0, description="Установленная мощность оборудования, кВт")
+    ka_w_per_kw: float = Field(ge=0, description="Удельные конвективные тепловыделения, Вт/кВт")
+    kz: float = Field(ge=0, description="Коэффициент загрузки оборудования")
 
     position: str
-    width_mm: float = Field(gt=0)
-    depth_mm: float = Field(gt=0)
+    width_mm: float = Field(ge=0)
+    depth_mm: float = Field(ge=0)
 
     room_name: Optional[str] = None
 

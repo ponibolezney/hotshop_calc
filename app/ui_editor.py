@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
+from app.excel_input_import import import_customer_excel_to_project_input
 from app.catalog import EquipmentCatalog
 from app.schemas import ProjectInput
 from app.storage import save_input_data, load_input_data
@@ -222,6 +223,13 @@ class EquipmentBlock:
                 self.mark_invalid(key)
                 ok = False
 
+        # После импорта Excel тип оборудования специально стоит "Не рассчитывать".
+        # Это маркер, что инженер ещё не проверил оборудование.
+        # Пока он не выберет реальный тип — сохранять/считать нельзя.
+        if self.get_widget_value("equipment_type_name") == "Не рассчитывать":
+            self.mark_invalid("equipment_type_name")
+            ok = False
+
         if not ok:
             return False
 
@@ -233,6 +241,18 @@ class EquipmentBlock:
             if not self.is_number(self.get_widget_value(key)):
                 self.mark_invalid(key)
                 ok = False
+
+            # Для расчёта эти поля должны быть больше 0.
+            # Нули допустимы только как временные значения после Excel-импорта,
+            # но до расчёта инженер обязан выбрать реальные типы/категории.
+            for key in ["qy_kw", "ka_w_per_kw", "kz", "width_mm", "depth_mm"]:
+                try:
+                    if float(self.get_widget_value(key)) <= 0:
+                        self.mark_invalid(key)
+                        ok = False
+                except Exception:
+                    self.mark_invalid(key)
+                    ok = False
 
         return ok
 
@@ -390,6 +410,16 @@ class RoomBlock:
             ok = False
 
         if not self.room_category_var.get().strip():
+            try:
+                self.room_category_combo.configure(style="Invalid.TCombobox")
+            except Exception:
+                pass
+            ok = False
+
+        # После импорта Excel категория помещения специально стоит "Не рассчитывать".
+        # Это маркер, что инженер ещё не проверил помещение.
+        # Пока он не выберет реальную категорию — сохранять/считать нельзя.
+        if self.room_category_var.get().strip() == "Не рассчитывать":
             try:
                 self.room_category_combo.configure(style="Invalid.TCombobox")
             except Exception:
@@ -685,7 +715,7 @@ class StartWindow:
             container,
             text="Создать исходные данные",
             font=("Arial", 16),
-            width=26,
+            width=30,
             height=2,
             command=self.create_new
         )
@@ -695,11 +725,21 @@ class StartWindow:
             container,
             text="Загрузить исходные данные",
             font=("Arial", 16),
-            width=26,
+            width=30,
             height=2,
             command=self.load_existing
         )
         self.load_button.pack(pady=15)
+
+        self.load_excel_button = tk.Button(
+            container,
+            text="Загрузить Excel от заказчика",
+            font=("Arial", 16),
+            width=30,
+            height=2,
+            command=self.load_customer_excel
+        )
+        self.load_excel_button.pack(pady=15)
 
     def create_new(self):
         self.root.destroy()
@@ -721,6 +761,27 @@ class StartWindow:
             ProjectInput(**data)
         except Exception as e:
             messagebox.showerror("Ошибка", f"Не удалось загрузить исходные данные:\n{e}")
+            return
+
+        self.root.destroy()
+        new_root = tk.Tk()
+        EditorWindow(new_root, self.catalog, loaded_data=data)
+        new_root.mainloop()
+
+    def load_customer_excel(self):
+        file_path = filedialog.askopenfilename(
+            title="Выбрать Excel-файл от заказчика",
+            filetypes=[("Excel files", "*.xlsx")]
+        )
+
+        if not file_path:
+            return
+
+        try:
+            project = import_customer_excel_to_project_input(file_path)
+            data = project.model_dump()
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось загрузить Excel:\n{e}")
             return
 
         self.root.destroy()
